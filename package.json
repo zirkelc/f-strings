@@ -1,20 +1,18 @@
 {
-  "name": "<PACKAGE>",
+  "name": "f-string",
   "version": "1.0.0",
-  "description": "<DESCRIPTION>",
+  "description": "Tagged template function to write readable multi-line strings with a powerful If-Else-EndIf control structure and automatic dedentation",
   "packageManager": "pnpm@9.0.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "files": [
     "dist"
   ],
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    }
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "prepublishOnly": "pnpm build",
@@ -24,11 +22,11 @@
     "prepare": "husky"
   },
   "keywords": [],
-  "author": "<AUTHOR>",
-  "license": "<LICENSE>",
+  "author": "Chris Cook",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/<USERNAME>/<REPO>"
+    "url": "git+https://github.com/zirkelc/f-string.git"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

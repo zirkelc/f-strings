@@ -1,134 +1,148 @@
-# TypeScript Single Package Project Template
+<div align='center'>
 
-This template provides an opinionated setup for a single package TypeScript project.
+# f-string
 
-## 🚀 Features
+<p align="center">Conditional template literals with automatic dedentation</p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/f-string" alt="f-string"><img src="https://img.shields.io/npm/dt/f-string?label=f-string"></a> <a href="https://github.com/zirkelc/f-string/actions/workflows/ci.yml" alt="CI"><img src="https://img.shields.io/github/actions/workflow/status/zirkelc/f-string/ci.yml?branch=main"></a>
+</p>
 
-- [PNPM](https://pnpm.io/) for efficient package management
-- [Biome](https://biomejs.dev/) for linting and formatting
-- [Vitest](https://vitest.dev/) for fast, modern testing
-- [tsdown](https://github.com/rolldown/tsdown) for TypeScript building and bundling
-- [tsx](https://tsx.is/) for running TypeScript files
-- [Husky](https://github.com/typicode/husky) for Git hooks
-- [GitHub Actions](.github/workflows/ci.yml) for continuous integration
-- [VSCode](.vscode/) debug configuration and editor settings
-- [@total-typescript/tsconfig](https://github.com/total-typescript/tsconfig) for TypeScript configuration
-- [Are The Types Wrong?](https://github.com/arethetypeswrong/arethetypeswrong.github.io) for type validation
-- [publint](https://github.com/publint/publint) for package.json validation
-- [EditorConfig](https://editorconfig.org/) for consistent coding styles
+</div>
 
-## 🚀 Getting Started
+`f-string` provides a template function `f` that allows you to write readable multi-line strings with a powerful If-Else-EndIf control structure and automatic dedentation.
 
-### 1. Create a new repository
+## Installation
 
-Create a new repository [using this template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template)
-
-### 2. Replace placeholders
-
-Replace all occurences of the following placeholders with the correct values:
-
-| Placeholder | File | Description |
-| --- | --- | --- |
-| `<PACKAGE>` | `package.json` | Your package name |
-| `<DESCRIPTION>` | `package.json` | Your package description |
-| `<USERNAME>` | `package.json` | Your GitHub username |
-| `<REPO>` | `package.json` | Your repository name |
-| `<AUTHOR>` | `package.json` | Your name |
-| `<LICENSE>` | `package.json` | Your license |
-
-### 3. Apply ToDos
-
-Find all occurrences of `TODO` and apply them:
-
-| TODO | File | Description |
-| --- | --- | --- |
-| `TODO: PREVIEW` | `.github/workflows/ci.yml` | Create [preview releases](#preview-releases) |
-| `TODO: PUBLISH` | `.github/workflows/ci.yml` | [Publish to NPM](#publish-npm) |
-
-### 4. Install, Build, Test
-
-Verify your project is working by running `install`, `build`, and `test`:
-
-```sh
-pnpm install
-pnpm build
-pnpm test
+```bash
+npm install f-string
 ```
 
-Happy coding! 🎉
+## Usage
 
-## 📋 Details
+Use the `f` template function to create multi-line strings with embedded expressions. Use `If`, `Else`, and `EndIf` to include conditional content.
 
-### Package
+```typescript
+import { f, If, Else, EndIf } from 'f-string';
 
-The [`package.json`](package.json) is configured as ESM (`"type": "module"`), but supports dual publishing with both ESM and CJS module formats.
+const history = [
+  { role: 'user', content: 'Hello' },
+  { role: 'assistant', content: 'Hi there!' },
+];
 
-### Biome
+const question = 'What is the capital of France?';
 
-[`biome.jsonc`](biome.jsonc) contains the default [Biome configuration](https://biomejs.dev/reference/configuration/) with minimal formatting adjustments. It uses the formatter settings from the [`.editorconfig`](.editorconfig) file.
+const prompt = f`
+  You are a helpful assistant.
 
-### Vitest
+  ${If(history.length > 0)}
+  Conversation history:
+  ${history.map((msg) => `- ${msg.role}: ${msg.content}`)}
+  ${Else()}
+  No conversation history.
+  ${EndIf()}
 
-An empty Vitest config is provided in [`vitest.config.ts`](vitest.config.ts).
+  User question:
+  ${question}
+`;
 
-### Build and Run
+console.log(message);
+```
 
-- `tsdown` builds `./src/index.ts`, outputting an ES module to the `dist` folder.
-- `tsx` compiles and runs TypeScript files on-the-fly.
+```plaintext
+You are a helpful assistant.
 
-### Git Hooks
+Conversation history:
+- user: Hello
+- assistant: Hi there!
 
-[Husky](https://github.com/typicode/husky) runs the [.husky/pre-commit](.husky/pre-commit) hook to lint staged files.
+User question:
+What is the capital of France?
+```
 
-### Continuous Integration
+### Dedentation
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) defines a GitHub Actions workflow to run linting and tests on commits and pull requests.
+Strips indentation from multi-line strings.
 
-### VSCode Integration
+```typescript
+import { f, If, EndIf } from 'f-string';
 
-#### Debugging
+const prompt = f`
+      Hello
+        World!
+          How are you?
+      I'm good, thank you!
+`;
 
-[`.vscode/launch.json`](.vscode/launch.json) provides VSCode launch configurations:
-- `Debug (tsx)`: Run and debug TypeScript files
-- `Test (vitest)`: Debug tests
+console.log(dedented);
+```
 
-It uses the [JavaScript Debug Terminal](https://code.visualstudio.com/docs/nodejs/nodejs-debugging) to run and debug.
+```plaintext
+Hello
+  World!
+    How are you?
+I'm good, thank you!
+```
 
-#### Editor Settings
+### Lazyness
 
-[`.vscode/settings.json`](.vscode/settings.json) configures Biome as the formatter and enables format-on-save.
+Expressions can be lazily evaluated, so you can use functions to generate content only when needed.
 
-### EditorConfig
+```typescript
+import { f, If, EndIf } from 'f-string';
 
-[`.editorconfig`](.editorconfig) ensures consistent coding styles across different editors and IDEs:
+const messages = await getMessages(); 
 
-- Uses spaces for indentation (2 spaces)
-- Sets UTF-8 charset
-- Ensures LF line endings
-- Trims trailing whitespace (except in Markdown files)
-- Inserts a final newline in files
+const prompt = f`
+  ${If(messages.length > 0)}
+    You have ${messages.length} messages:
+    ${() => messages.map((msg) => `- ${msg}`)}
+  ${Else()}
+    No messages.
+  ${EndIf()}
+`;
 
-This configuration complements Biome and helps maintain a consistent code style throughout the project.
+console.log(prompt);
+```
 
-### Types Validation
+```plaintext
+You have 1000 messages:
+- Message 1
+- Message 2
+...
+- Message 1000
+```
 
-The project includes the `@arethetypeswrong/cli` CLI tool to validate TypeScript types in your package. It is integrated into `tsdown` and will run automatically during the build
+## API
 
-### Publint
+### `f` - Template Function
 
-The project includes `publint` to validate your `package.json` file. It is integrated into `tsdown` and will run automatically during the build.
+```typescript
+f`template ${value} string`
+```
 
-## Optional
+### `If(condition)` - Conditional Block
 
-### <a name="publish-npm"></a> Publish to NPM
-[JS-DevTools/npm-publish](https://github.com/JS-DevTools/npm-publish) is a GitHub Action to publish packages to npm automatically by updating the version number.
+```typescript
 
-To enable this, apply the `TODO: PUBLISH`.
+${If(condition)}
+  content when true
+${EndIf()}
+```
 
-### <a name="preview-releases"></a> Preview Releases
+### `Else()` - Alternative Block
 
-[pkg.pr.new](https://github.com/stackblitz-labs/pkg.pr.new) will automatically generate preview releases for every push and pull request. This allows you to test changes before publishing to npm.
+```typescript
+${If(condition)}
+  content when true
+${Else()}
+  content when false
+${EndIf()}
+```
 
-Must install GitHub App: [pkg.pr.new](https://github.com/apps/pkg-pr-new)
+### `EndIf()` - End Conditional
 
-To enable this, apply the `TODO: PREVIEW`.
+Marks the end of a conditional block. Required for every `If`.
+
+## License
+
+MIT
