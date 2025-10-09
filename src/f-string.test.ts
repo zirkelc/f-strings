@@ -4,72 +4,82 @@ import { Else, EndIf, f, If } from './f-string';
 describe('f-string', () => {
   describe('conditional', () => {
     it('should include if-branch when condition is true', () => {
+      const result = f`Start ${If(true)}TRUE${EndIf} End`;
+      expect(result).toMatchInlineSnapshot(`"Start TRUE End"`);
+    });
+
+    it('should work with EndIf as function call', () => {
       const result = f`Start ${If(true)}TRUE${EndIf()} End`;
       expect(result).toMatchInlineSnapshot(`"Start TRUE End"`);
     });
 
-    it('should exclude if-branch when condition is false', () => {
-      const result = f`Start ${If(false)}FALSE${EndIf()} End`;
-      expect(result).toMatchInlineSnapshot(`"Start  End"`);
-    });
-
-    it('should exclude else-branch when condition is true', () => {
-      const result = f`Start ${If(true)}TRUE${Else()}FALSE${EndIf()} End`;
-      expect(result).toMatchInlineSnapshot(`"Start TRUE End"`);
-    });
-
-    it('should include else-branch when condition is false', () => {
+    it('should work with Else and EndIf as function calls', () => {
       const result = f`Start ${If(false)}TRUE${Else()}FALSE${EndIf()} End`;
       expect(result).toMatchInlineSnapshot(`"Start FALSE End"`);
     });
 
+    it('should exclude if-branch when condition is false', () => {
+      const result = f`Start ${If(false)}FALSE${EndIf} End`;
+      expect(result).toMatchInlineSnapshot(`"Start  End"`);
+    });
+
+    it('should exclude else-branch when condition is true', () => {
+      const result = f`Start ${If(true)}TRUE${Else}FALSE${EndIf} End`;
+      expect(result).toMatchInlineSnapshot(`"Start TRUE End"`);
+    });
+
+    it('should include else-branch when condition is false', () => {
+      const result = f`Start ${If(false)}TRUE${Else}FALSE${EndIf} End`;
+      expect(result).toMatchInlineSnapshot(`"Start FALSE End"`);
+    });
+
     it('should handle empty conditional blocks', () => {
-      const result = f`Start ${If(true)}${EndIf()} End`;
+      const result = f`Start ${If(true)}${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start  End"`);
     });
 
     it('should handle truthy values', () => {
-      const result = f`${If(1)}truthy${EndIf()}`;
+      const result = f`${If(1)}truthy${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"truthy"`);
     });
 
     it('should handle falsy values', () => {
-      const result = f`${If(0)}falsy${Else()}else${EndIf()}`;
+      const result = f`${If(0)}falsy${Else}else${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"else"`);
     });
 
     it('should handle null condition', () => {
-      const result = f`${If(null)}null${Else()}not null${EndIf()}`;
+      const result = f`${If(null)}null${Else}not null${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"not null"`);
     });
 
     it('should handle undefined condition', () => {
-      const result = f`${If(undefined)}undefined${Else()}defined${EndIf()}`;
+      const result = f`${If(undefined)}undefined${Else}defined${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"defined"`);
     });
 
     it('should handle nested conditionals', () => {
-      const result = f`Start ${If(true)}Outer ${If(true)}Inner${EndIf()} Outer${EndIf()} End`;
+      const result = f`Start ${If(true)}Outer ${If(true)}Inner${EndIf} Outer${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start Outer Inner Outer End"`);
     });
 
     it('should handle nested conditionals with false outer condition', () => {
-      const result = f`Start ${If(false)}Outer ${If(true)}Inner${EndIf()} Outer${EndIf()} End`;
+      const result = f`Start ${If(false)}Outer ${If(true)}Inner${EndIf} Outer${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start  End"`);
     });
 
     it('should handle nested conditionals with false inner condition', () => {
-      const result = f`Start ${If(true)}Outer ${If(false)}Inner${EndIf()} Outer${EndIf()} End`;
+      const result = f`Start ${If(true)}Outer ${If(false)}Inner${EndIf} Outer${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start Outer  Outer End"`);
     });
 
     it('should handle deeply nested conditionals', () => {
-      const result = f`${If(true)}L1 ${If(true)}L2 ${If(true)}L3${EndIf()} L2${EndIf()} L1${EndIf()}`;
+      const result = f`${If(true)}L1 ${If(true)}L2 ${If(true)}L3${EndIf} L2${EndIf} L1${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"L1 L2 L3 L2 L1"`);
     });
 
     it('should handle nested conditionals with else branches', () => {
-      const result = f`${If(true)}Outer ${If(false)}Inner True${Else()}Inner False${EndIf()} Outer${EndIf()}`;
+      const result = f`${If(true)}Outer ${If(false)}Inner True${Else}Inner False${EndIf} Outer${EndIf}`;
       expect(result).toMatchInlineSnapshot(`"Outer Inner False Outer"`);
     });
   });
@@ -85,21 +95,21 @@ describe('f-string', () => {
     it('should include interpolated values in true conditional', () => {
       const num = 42;
       const str = 'hello';
-      const result = f`Start ${If(true)}${num} ${str}${EndIf()} End`;
+      const result = f`Start ${If(true)}${num} ${str}${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start 42 hello End"`);
     });
 
     it('should exclude interpolated values in false conditional', () => {
       const num = 42;
       const str = 'hello';
-      const result = f`Start ${If(false)}${num} ${str}${EndIf()} End`;
+      const result = f`Start ${If(false)}${num} ${str}${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start  End"`);
     });
 
     it('should include interpolated values in else-branch', () => {
       const num = 42;
       const str = 'hello';
-      const result = f`Start ${If(false)}wrong${Else()}${num} ${str}${EndIf()} End`;
+      const result = f`Start ${If(false)}wrong${Else}${num} ${str}${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start 42 hello End"`);
     });
   });
@@ -108,7 +118,7 @@ describe('f-string', () => {
     it('should evaluate function in if-branch', () => {
       const truthyFn = vi.fn(() => 'TRUE');
       const falsyFn = vi.fn(() => 'FALSE');
-      const result = f`Start ${If(true)}${truthyFn}${Else()}${falsyFn}${EndIf()} End`;
+      const result = f`Start ${If(true)}${truthyFn}${Else}${falsyFn}${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start TRUE End"`);
       expect(truthyFn).toHaveBeenCalled();
       expect(falsyFn).not.toHaveBeenCalled();
@@ -117,7 +127,7 @@ describe('f-string', () => {
     it('should evaluate function in else-branch', () => {
       const truthyFn = vi.fn(() => 'TRUE');
       const falsyFn = vi.fn(() => 'FALSE');
-      const result = f`Start ${If(false)} ${truthyFn} ${Else()} ${falsyFn} ${EndIf()} End`;
+      const result = f`Start ${If(false)} ${truthyFn} ${Else} ${falsyFn} ${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start  FALSE  End"`);
       expect(truthyFn).not.toHaveBeenCalled();
       expect(falsyFn).toHaveBeenCalled();
@@ -126,7 +136,7 @@ describe('f-string', () => {
     it('should mix lazy and eager values', () => {
       const eager = 'eager';
       const lazy = vi.fn(() => 'lazy');
-      const result = f`Start ${If(true)} ${eager} ${lazy} ${EndIf()} End`;
+      const result = f`Start ${If(true)} ${eager} ${lazy} ${EndIf} End`;
       expect(result).toMatchInlineSnapshot(`"Start  eager lazy  End"`);
     });
 
@@ -146,7 +156,7 @@ describe('f-string', () => {
 
     it('should join array from function with newlines', () => {
       const getItems = vi.fn(() => ['a', 'b', 'c']);
-      const result = f`${If(true)}${getItems}${EndIf()}`;
+      const result = f`${If(true)}${getItems}${EndIf}`;
       expect(result).toMatchInlineSnapshot(`
         "a
         b
@@ -167,13 +177,13 @@ describe('f-string', () => {
       const result = f`
         ${If(true)}
         Line 1
-        ${EndIf()}
+        ${EndIf}
         ${If(true)}
         Line 2
-        ${EndIf()}
+        ${EndIf}
         ${If(true)}
         Line 3
-        ${EndIf()}
+        ${EndIf}
       `;
       expect(result).toMatchInlineSnapshot(`
         "Line 1
@@ -186,15 +196,15 @@ describe('f-string', () => {
       const result = f`
         ${If(true)}
         Line 1
-        ${EndIf()}
+        ${EndIf}
 
         ${If(true)}
         Line 2
-        ${EndIf()}
+        ${EndIf}
 
         ${If(true)}
         Line 3
-        ${EndIf()}
+        ${EndIf}
       `;
       expect(result).toMatchInlineSnapshot(`
         "Line 1
@@ -209,10 +219,10 @@ describe('f-string', () => {
       const result = f`
         Start
         ${If(true)}  Line 1
-          ${EndIf()}
+          ${EndIf}
 
           ${If(true)}
-          Line 2${EndIf()}
+          Line 2${EndIf}
           Line 3
         End
       `;
@@ -229,7 +239,7 @@ describe('f-string', () => {
 
     it('should NOT remove whitespaces from inline if-else-endif lines', () => {
       const result = f`
-        Line 1 ${If(true)}Line 2${EndIf()} Line 3
+        Line 1 ${If(true)}Line 2${EndIf} Line 3
       `;
       expect(result).toMatchInlineSnapshot(`
         "Line 1 Line 2 Line 3"
@@ -256,9 +266,9 @@ describe('f-string', () => {
       const result = f`
         ${If(false)}
         Line 1
-        ${Else()}
+        ${Else}
         Line 2
-        ${EndIf()}
+        ${EndIf}
       `;
       expect(result).toMatchInlineSnapshot(`
         "Line 2"
@@ -274,14 +284,20 @@ describe('f-string', () => {
     });
 
     it('should throw error when EndIf is missing for nested If', () => {
-      expect(() => f`${If(true)}${If(true)}${EndIf()}`).toThrow(
+      expect(() => f`${If(true)}${If(true)}${EndIf}`).toThrow(
         'Missing EndIf for If at index 0',
       );
     });
 
     it('should throw error when EndIf is missing after Else', () => {
-      expect(() => f`${If(false)}${Else()}content`).toThrow(
+      expect(() => f`${If(false)}${Else}content`).toThrow(
         'Missing EndIf for If at index 0',
+      );
+    });
+
+    it('should throw error when If is used without calling it', () => {
+      expect(() => f`${If}content${EndIf}`).toThrow(
+        'If must be called as a function: If(condition)',
       );
     });
   });

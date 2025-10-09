@@ -2,14 +2,14 @@
 
 # f-string
 
-<p align="center">Conditional template literals with automatic dedentation</p>
+<p align="center">Template function with conditional expressions and automatic dedentation</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/f-string" alt="f-string"><img src="https://img.shields.io/npm/dt/f-string?label=f-string"></a> <a href="https://github.com/zirkelc/f-string/actions/workflows/ci.yml" alt="CI"><img src="https://img.shields.io/github/actions/workflow/status/zirkelc/f-string/ci.yml?branch=main"></a>
 </p>
 
 </div>
 
-`f-string` provides a template function `f` that allows you to write readable multi-line strings with a powerful If-Else-EndIf control structure and automatic dedentation.
+`f-string` provides a [tagged template](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) `f` that allows you to write readable multi-line strings with powerful If-Else-EndIf expressions and automatic dedentation.
 
 ## Installation
 
@@ -19,9 +19,9 @@ npm install f-string
 
 ## Usage
 
-Use the `f` template function to create multi-line strings with embedded expressions. Use `If`, `Else`, and `EndIf` to include conditional content.
+Use `If`, `Else`, and `EndIf` expressions to include conditional content.
 
-```typescript
+```ts
 import { f, If, Else, EndIf } from 'f-string';
 
 const history = [
@@ -37,9 +37,9 @@ const prompt = f`
   ${If(history.length > 0)}
   Conversation history:
   ${history.map((msg) => `- ${msg.role}: ${msg.content}`)}
-  ${Else()}
+  ${Else}
   No conversation history.
-  ${EndIf()}
+  ${EndIf}
 
   User question:
   ${question}
@@ -96,9 +96,9 @@ const prompt = f`
   ${If(messages.length > 0)}
     You have ${messages.length} messages:
     ${() => messages.map((msg) => `- ${msg}`)}
-  ${Else()}
+  ${Else}
     No messages.
-  ${EndIf()}
+  ${EndIf}
 `;
 
 console.log(prompt);
@@ -114,7 +114,7 @@ You have 1000 messages:
 
 ## API
 
-### `f` - Template Function
+### `f` - Tagged Template Function
 
 ```typescript
 f`template ${value} string`
@@ -122,26 +122,39 @@ f`template ${value} string`
 
 ### `If(condition)` - Conditional Block
 
-```typescript
+Includes the following content if the `condition` is truthy.
 
-${If(condition)}
-  content when true
-${EndIf()}
+```typescript
+const text = f`
+  ${If(condition)}
+    content when true
+  ${EndIf}
+`;
 ```
 
 ### `Else()` - Alternative Block
 
+Includes the following content if the `condition` is falsy.
+
+> ![NOTE]
+> `Else` can be used without calling it as a function: `${Else}` or `${Else()}`. 
+
 ```typescript
-${If(condition)}
-  content when true
-${Else()}
-  content when false
-${EndIf()}
+const text = f`
+  ${If(condition)}
+    content when true
+  ${Else}
+    content when false
+  ${EndIf}
+`;
 ```
 
-### `EndIf()` - End Conditional
+### `EndIf` - End Conditional
 
 Marks the end of a conditional block. Required for every `If`.
+
+> ![NOTE]
+> `EndIf` can be used without calling it as a function: `${EndIf}` or `${EndIf()}`.
 
 ## License
 

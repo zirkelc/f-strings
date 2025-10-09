@@ -31,7 +31,9 @@ const isControlSymbol = (value: any): boolean =>
   value === IfTrueSymbol ||
   value === IfFalseSymbol ||
   value === ElseSymbol ||
-  value === EndIfSymbol;
+  value === EndIfSymbol ||
+  value === Else ||
+  value === EndIf;
 
 /**
  * Removes common leading indentation from multi-line strings.
@@ -87,15 +89,20 @@ const lookAhead = (
 ): number | undefined => {
   let depth = 0;
   for (let i = startIndex; i < values.length; i++) {
-    if (values[i] === IfTrueSymbol || values[i] === IfFalseSymbol) {
+    const val = values[i];
+    if (val === IfTrueSymbol || val === IfFalseSymbol) {
       depth++;
-    } else if (values[i] === EndIfSymbol) {
+    } else if (val === EndIfSymbol || val === EndIf) {
       if (depth === 0 && symbol === EndIfSymbol) {
         return i;
       }
       depth--;
-    } else if (values[i] === symbol && depth === 0) {
-      return i;
+    } else if (depth === 0) {
+      if (symbol === ElseSymbol && (val === ElseSymbol || val === Else)) {
+        return i;
+      } else if (val === symbol) {
+        return i;
+      }
     }
   }
   return undefined;
@@ -182,8 +189,16 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
       continue;
     }
 
+    // Evaluate value if it's Else or EndIf function (allow calling them optionally)
+    let currentValue = values[i];
+    if (currentValue === Else || currentValue === EndIf) {
+      currentValue = currentValue();
+    } else if (currentValue === If) {
+      throw new Error('If must be called as a function: If(condition)');
+    }
+
     // Handle If(true) - include content from if-branch
-    if (values[i] === IfTrueSymbol) {
+    if (currentValue === IfTrueSymbol) {
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
 
       if (endifIndex === undefined) {
@@ -195,7 +210,7 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
       i++;
     }
     // Handle If(false) - skip content from if-branch, include else-branch if present
-    else if (values[i] === IfFalseSymbol) {
+    else if (currentValue === IfFalseSymbol) {
       const elseIndex = lookAhead(values, i + 1, ElseSymbol);
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
 
@@ -219,7 +234,7 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
       }
     }
     // Handle Else - skip to matching EndIf (we're in the true branch)
-    else if (values[i] === ElseSymbol) {
+    else if (currentValue === ElseSymbol) {
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
       if (endifIndex === undefined) {
         throw new Error(`Missing EndIf for Else at index ${i}`);
@@ -227,12 +242,12 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
       i = endifIndex + 1; // Skip to after EndIf
     }
     // Handle EndIf - just skip it
-    else if (values[i] === EndIfSymbol) {
+    else if (currentValue === EndIfSymbol) {
       i++;
     }
     // Handle regular values (not control symbols)
     else {
-      result += evaluate(values[i]); // Lazy evaluation: calls function if value is a function
+      result += evaluate(currentValue); // Lazy evaluation: calls function if value is a function
       i++;
     }
   }
