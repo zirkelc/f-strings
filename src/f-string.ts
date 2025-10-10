@@ -3,37 +3,33 @@ const IfFalseSymbol = Symbol('if(false)');
 const ElseSymbol = Symbol('else');
 const EndIfSymbol = Symbol('endif');
 
-// Matches strings that are empty/whitespace-only OR end with newline+whitespace
+// Matches strings that are whitespace-only or end with newline followed by optional whitespace
+// Used to detect control symbols on their own line
 // Examples: "", "  ", "text\n  ", "text\n"
 const ENDS_WITH_WHITESPACE_LINE = /^\s*$|\n\s*$/;
 
 // Matches strings that start with a newline
+// Used to detect whitespace that should be stripped after control symbols
 // Examples: "\ntext", "\n  text", "\n"
 const STARTS_WITH_NEWLINE = /^\n/;
 
-// Matches strings that start with newline+horizontal-whitespace followed by another newline or end
-// Examples: "\n  \n", "\n  ", "\n\t\n" (but NOT "\n\ntext")
-const WHITESPACE_ONLY_LINE = /^\n[ \t]*(?:\n|$)/;
-
-// Matches lines that start with whitespace followed by non-whitespace (captures the whitespace)
+// Matches lines that start with whitespace followed by non-whitespace content
+// Captures the leading whitespace for indentation calculation
 // Examples: "  text" (captures "  "), "\tcode" (captures "\t")
 const INDENTED_LINE = /^(\s+)\S/;
 
-export const If = (condition: any): symbol => {
-  return condition ? IfTrueSymbol : IfFalseSymbol;
-};
+export const If = (condition: any): symbol =>
+  condition ? IfTrueSymbol : IfFalseSymbol;
 
-export const Else = () => ElseSymbol;
+export const Else = (): symbol => ElseSymbol;
 
-export const EndIf = () => EndIfSymbol;
+export const EndIf = (): symbol => EndIfSymbol;
 
 const isControlSymbol = (value: any): boolean =>
   value === IfTrueSymbol ||
   value === IfFalseSymbol ||
   value === ElseSymbol ||
-  value === EndIfSymbol ||
-  value === Else ||
-  value === EndIf;
+  value === EndIfSymbol;
 
 /**
  * Removes common leading indentation from multi-line strings.
@@ -78,9 +74,16 @@ const dedent = (str: string): string => {
 };
 
 /**
- * Looks ahead in the values array to find the next occurrence of a specific symbol,
- * accounting for nested If blocks.
- * Returns the index of the symbol or undefined if not found.
+ * Looks ahead in the values array to find the next occurrence of a specific symbol
+ * at the current nesting level (depth 0), accounting for nested If blocks.
+ *
+ * Tracks depth: increments on If symbols, decrements on EndIf symbols.
+ * Only returns when the target symbol is found at depth 0.
+ *
+ * @param values - Normalized values array
+ * @param startIndex - Index to start searching from
+ * @param symbol - Symbol to search for (ElseSymbol or EndIfSymbol)
+ * @returns Index of the symbol at depth 0, or undefined if not found
  */
 const lookAhead = (
   values: any[],
@@ -92,13 +95,13 @@ const lookAhead = (
     const val = values[i];
     if (val === IfTrueSymbol || val === IfFalseSymbol) {
       depth++;
-    } else if (val === EndIfSymbol || val === EndIf) {
+    } else if (val === EndIfSymbol) {
       if (depth === 0 && symbol === EndIfSymbol) {
         return i;
       }
       depth--;
     } else if (depth === 0) {
-      if (symbol === ElseSymbol && (val === ElseSymbol || val === Else)) {
+      if (symbol === ElseSymbol && val === ElseSymbol) {
         return i;
       } else if (val === symbol) {
         return i;
@@ -109,8 +112,14 @@ const lookAhead = (
 };
 
 /**
- * Evaluates a value, calling it if it's a function (lazy evaluation).
- * If the value is an array, joins it with newlines.
+ * Evaluates a value with lazy evaluation and array handling.
+ *
+ * - Functions are called recursively until a non-function value is reached
+ * - Arrays are joined with newline separators
+ * - All other values are returned as-is
+ *
+ * @param value - Value to evaluate
+ * @returns Evaluated value
  */
 const evaluate = (value: any): any => {
   if (typeof value === 'function') {
@@ -126,48 +135,92 @@ const evaluate = (value: any): any => {
  * Tagged template literal function with conditional blocks and automatic dedentation.
  *
  * @param strings - Template string array
- * @param values - Template values
+ * @param rawValues - Template values
  * @returns Processed string with false conditional blocks removed and dedented
  */
-export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
-  // Get string at index with stripping applied if adjacent to control symbol on its own line
+export const f = (
+  strings: TemplateStringsArray,
+  ...rawValues: any[]
+): string => {
+  // Normalize values: convert Else/EndIf function references to their symbols
+  // This allows both ${Else} and ${Else()} syntax while maintaining type safety
+  const values = rawValues.map((v) => {
+    if (v === Else || v === EndIf) {
+      return v();
+    } else if (v === If) {
+      throw new Error('If must be called as a function: If(condition)');
+    }
+    return v;
+  });
+
+  /**
+   * Gets the template string at the given index with context-aware whitespace stripping.
+   *
+   * Whitespace is only stripped when control symbols are on their own lines, meaning:
+   * - Both neighbors (previous and current value, or current and next value) are control symbols
+   * - The string segment matches the standalone pattern (ends/starts with newline + whitespace)
+   *
+   * This preserves whitespace for interpolated values while cleaning up control flow syntax.
+   */
   const getString = (index: number): string => {
     let str = strings[index] ?? '';
 
-    // Check if previous value was a control symbol on its own line (strip leading whitespace)
+    // Strip leading whitespace if previous value was a standalone control symbol
+    // Only strip when both the previous value AND current value are control symbols (or we're at the end)
+    // This ensures we don't strip whitespace before interpolated values
     if (index > 0 && isControlSymbol(values[index - 1])) {
-      const prevStr = strings[index - 1] ?? '';
+      const currentValueIsControl =
+        index < values.length && isControlSymbol(values[index]);
+      const atEnd = index >= values.length;
 
-      if (
-        ENDS_WITH_WHITESPACE_LINE.test(prevStr) &&
-        STARTS_WITH_NEWLINE.test(str)
-      ) {
-        // If the line after control symbol contains only whitespace, remove it entirely
-        // Otherwise, keep it as-is to preserve indentation of following content
-        if (WHITESPACE_ONLY_LINE.test(str)) {
-          str = str.replace(/^\n[ \t]*/, '');
+      if (currentValueIsControl || atEnd) {
+        const prevStr = strings[index - 1] ?? '';
+
+        // Only strip if the pattern suggests control symbols on their own line
+        if (
+          ENDS_WITH_WHITESPACE_LINE.test(prevStr) &&
+          STARTS_WITH_NEWLINE.test(str)
+        ) {
+          if (/^\n[ \t]*$/.test(str)) {
+            // Single line with only whitespace after newline - strip it completely
+            str = str.replace(/^\n[ \t]*/, '');
+          } else if (/^\n[ \t]*\n/.test(str) && !str.match(/\S/)) {
+            // Multiple newlines with only whitespace - preserve empty lines, strip first line's whitespace
+            str = str.replace(/^\n[ \t]*/, '');
+          }
+          // If there's actual content, preserve indentation (don't strip)
         }
-        // Don't strip anything if there's content - preserve the indentation
       }
     }
 
-    // Check if current value is a control symbol on its own line (strip trailing whitespace)
+    // Strip trailing whitespace if current value is a standalone control symbol
+    // Only strip when both the current value AND next value are control symbols (or we're at the end)
+    // This ensures we don't strip whitespace after interpolated values
     if (index < values.length && isControlSymbol(values[index])) {
-      const nextStr = strings[index + 1] ?? '';
+      const nextValueIsControl =
+        index + 1 < values.length && isControlSymbol(values[index + 1]);
+      const nextAtEnd = index + 1 >= values.length;
 
-      if (
-        ENDS_WITH_WHITESPACE_LINE.test(str) &&
-        STARTS_WITH_NEWLINE.test(nextStr)
-      ) {
-        // Strip trailing whitespace on control symbol's line
-        // Only strip the last \n+spaces if there's non-whitespace content before it
-        // This preserves empty lines like "\n  " while removing "\nLine 1\n  " -> "\nLine 1"
-        if (str.length > 0 && str.match(/\S/)) {
-          // Has content, safe to strip last line
-          str = str.replace(/\n[ \t]*$/, '');
-        } else {
-          // Only whitespace, just strip horizontal whitespace
-          str = str.replace(/[ \t]+$/, '');
+      if (nextValueIsControl || nextAtEnd) {
+        const nextStr = strings[index + 1] ?? '';
+
+        // Only strip if the pattern suggests control symbols on their own line
+        if (
+          ENDS_WITH_WHITESPACE_LINE.test(str) &&
+          STARTS_WITH_NEWLINE.test(nextStr)
+        ) {
+          // Detect inline content: non-whitespace characters before the trailing whitespace
+          const hasInlineContent = str.match(/\S/) && !str.match(/^\s*\n/);
+
+          if (hasInlineContent) {
+            // Inline content exists - strip only horizontal whitespace, preserve the newline
+            // Example: "text  \n" -> "text\n"
+            str = str.replace(/[ \t]+$/, '');
+          } else {
+            // No inline content - control symbol is standalone, strip newline and whitespace
+            // Example: "  \n" -> ""
+            str = str.replace(/\n[ \t]*$/, '');
+          }
         }
       }
     }
@@ -178,39 +231,35 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
   let result = '';
   let i = 0;
 
-  // Template literals interleave strings and values: string[0] + value[0] + string[1] + value[1] + ...
-  // We iterate through strings (which has one more element than values)
+  // Iterate through template strings and interleaved values
+  // Template structure: string[0] + value[0] + string[1] + value[1] + ... + string[n]
+  // Note: strings.length = values.length + 1
   while (i < strings.length) {
     result += getString(i);
 
-    // Check if we have a corresponding value at this position
+    // Check if there's a corresponding value at this position
     if (i >= values.length) {
       i++;
       continue;
     }
 
-    // Evaluate value if it's Else or EndIf function (allow calling them optionally)
-    let currentValue = values[i];
-    if (currentValue === Else || currentValue === EndIf) {
-      currentValue = currentValue();
-    } else if (currentValue === If) {
-      throw new Error('If must be called as a function: If(condition)');
-    }
+    const value = values[i];
 
-    // Handle If(true) - include content from if-branch
-    if (currentValue === IfTrueSymbol) {
+    // Handle If(true) - include the if-branch content, skip the else-branch
+    if (value === IfTrueSymbol) {
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
 
       if (endifIndex === undefined) {
         throw new Error(`Missing EndIf for If at index ${i}`);
       }
 
-      // Continue processing normally until we hit Else or EndIf
-      // This allows nested If blocks to be processed by the main loop
+      // Simply increment and let the main loop process the if-branch
+      // Nested If blocks will be handled recursively
+      // When we encounter Else, we'll skip to EndIf (see Else handler below)
       i++;
     }
-    // Handle If(false) - skip content from if-branch, include else-branch if present
-    else if (currentValue === IfFalseSymbol) {
+    // Handle If(false) - skip the if-branch, include the else-branch if present
+    else if (value === IfFalseSymbol) {
       const elseIndex = lookAhead(values, i + 1, ElseSymbol);
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
 
@@ -219,35 +268,35 @@ export const f = (strings: TemplateStringsArray, ...values: any[]): string => {
       }
 
       if (elseIndex !== undefined && elseIndex < endifIndex) {
-        // Has Else: skip content between If and Else, include from Else to EndIf
+        // Has Else branch - skip if-branch, manually process else-branch
         for (let j = elseIndex + 1; j < endifIndex; j++) {
           result += getString(j);
           if (values[j] !== undefined && !isControlSymbol(values[j])) {
-            result += evaluate(values[j]); // Lazy evaluation happens here
+            result += evaluate(values[j]);
           }
         }
         result += getString(endifIndex);
-        i = endifIndex + 1; // Jump past the entire conditional block
+        i = endifIndex + 1;
       } else {
-        // No Else: skip all content between If and EndIf
-        i = endifIndex + 1; // Jump past the entire conditional block
+        // No Else branch - skip entire if-block
+        i = endifIndex + 1;
       }
     }
-    // Handle Else - skip to matching EndIf (we're in the true branch)
-    else if (currentValue === ElseSymbol) {
+    // Handle Else - we only reach this when in a true branch, so skip to EndIf
+    else if (value === ElseSymbol) {
       const endifIndex = lookAhead(values, i + 1, EndIfSymbol);
       if (endifIndex === undefined) {
         throw new Error(`Missing EndIf for Else at index ${i}`);
       }
-      i = endifIndex + 1; // Skip to after EndIf
+      i = endifIndex + 1;
     }
-    // Handle EndIf - just skip it
-    else if (currentValue === EndIfSymbol) {
+    // Handle EndIf - just skip it (boundary marker only)
+    else if (value === EndIfSymbol) {
       i++;
     }
-    // Handle regular values (not control symbols)
+    // Handle regular interpolated values
     else {
-      result += evaluate(currentValue); // Lazy evaluation: calls function if value is a function
+      result += evaluate(value);
       i++;
     }
   }

@@ -34,7 +34,7 @@ const question = 'What is the capital of France?';
 const prompt = f`
   You are a helpful assistant.
 
-  ${If(history.length > 0)}
+  ${If(history.length)}
   Conversation history:
   ${history.map((msg) => `- ${msg.role}: ${msg.content}`)}
   ${Else}
@@ -93,7 +93,7 @@ import { f, If, EndIf } from 'f-string';
 const messages = await getMessages(); 
 
 const prompt = f`
-  ${If(messages.length > 0)}
+  ${If(messages.length)}
     You have ${messages.length} messages:
     ${() => messages.map((msg) => `- ${msg}`)}
   ${Else}
@@ -122,7 +122,7 @@ f`template ${value} string`
 
 ### `If(condition)` - Conditional Block
 
-Includes the following content if the `condition` is truthy.
+Starts a conditional block. Includes the following content if the `condition` is truthy.
 
 ```typescript
 const text = f`
@@ -134,7 +134,7 @@ const text = f`
 
 ### `Else()` - Alternative Block
 
-Includes the following content if the `condition` is falsy.
+Starts an alternative block. Includes the following content if the `condition` is falsy.
 
 > ![NOTE]
 > `Else` can be used without calling it as a function: `${Else}` or `${Else()}`. 
