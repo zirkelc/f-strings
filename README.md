@@ -2,7 +2,7 @@
 
 # f-strings
 
-<p align="center">[Tagged template](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) function with embedded if-else conditions and automatic dedentation to write readable strings</p>
+<p align="center"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">Tagged template</a> function with embedded if-else conditions and automatic dedentation to write readable strings</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/f-strings" alt="f-strings"><img src="https://img.shields.io/npm/dt/f-strings?label=f-strings"></a> <a href="https://github.com/zirkelc/f-strings/actions/workflows/ci.yml" alt="CI"><img src="https://img.shields.io/github/actions/workflow/status/zirkelc/f-strings/ci.yml?branch=main"></a>
 </p>
@@ -121,7 +121,7 @@ You have 1000 messages:
 f`template ${value} string`
 ```
 
-### `If(condition)` - Conditional Block
+#### `If(condition)` - Conditional Block
 
 Starts a conditional block. Includes the following content if the `condition` is truthy.
 
@@ -133,7 +133,7 @@ const text = f`
 `;
 ```
 
-### `Else()` - Alternative Block
+#### `Else()` - Alternative Block
 
 Starts an alternative block. Includes the following content if the `condition` is falsy.
 
@@ -150,7 +150,7 @@ const text = f`
 `;
 ```
 
-### `EndIf` - End Conditional
+#### `EndIf()` - End Conditional
 
 Marks the end of a conditional block. Required for every `If`.
 
