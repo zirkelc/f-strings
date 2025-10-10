@@ -2,14 +2,12 @@
 
 # f-strings
 
-<p align="center">Template function with conditional expressions and automatic dedentation</p>
+<p align="center">[Tagged template](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) function with embedded if-else conditions and automatic dedentation to write readable strings</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/f-strings" alt="f-strings"><img src="https://img.shields.io/npm/dt/f-strings?label=f-strings"></a> <a href="https://github.com/zirkelc/f-strings/actions/workflows/ci.yml" alt="CI"><img src="https://img.shields.io/github/actions/workflow/status/zirkelc/f-strings/ci.yml?branch=main"></a>
 </p>
 
 </div>
-
-`f-strings` provides a [tagged template](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) `f` that allows you to write readable multi-line strings with embedded if-else conditions and automatic dedentation.
 
 ## Installation
 
@@ -85,7 +83,10 @@ I'm good, thank you!
 
 ### Lazyness
 
-Expressions can be lazily evaluated, so you can use functions to generate content only when needed.
+Values will be lazily evaluated, so you can use functions to generate content only when needed.
+
+> [!TIP]
+> Arrays are automatically joined with newlines, so `${messages}` is equivalent to `${messages.join('\n')}`.
 
 ```typescript
 import { f, If, EndIf } from 'f-strings';
@@ -136,7 +137,7 @@ const text = f`
 
 Starts an alternative block. Includes the following content if the `condition` is falsy.
 
-> ![NOTE]
+> [!TIP]
 > `Else` can be used without calling it as a function: `${Else}` or `${Else()}`. 
 
 ```typescript
@@ -153,7 +154,7 @@ const text = f`
 
 Marks the end of a conditional block. Required for every `If`.
 
-> ![NOTE]
+> [!TIP]
 > `EndIf` can be used without calling it as a function: `${EndIf}` or `${EndIf()}`.
 
 ## License
