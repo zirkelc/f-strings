@@ -1,1 +1,1 @@
-export * from './f-string';
+export * from './f-strings';

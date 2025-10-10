@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a TypeScript utility library called "f-string" that provides conditional template literal functionality with automatic dedentation for cleaner string formatting. The main features include conditional blocks, lazy evaluation, and automatic indentation removal.
+This is a TypeScript utility library called "f-strings" that provides conditional template literal functionality with automatic dedentation for cleaner string formatting. The main features include conditional blocks, lazy evaluation, and automatic indentation removal.
 
 ## Core Commands
 
@@ -22,16 +22,16 @@ pnpm test
 pnpm lint
 
 # Run tests for specific file or pattern
-pnpm test src/f-string.test.ts
+pnpm test src/f-strings.test.ts
 ```
 
 ## Architecture
 
 The project exports a template literal utility with conditional logic:
 
-- **Main entry**: `src/index.ts` - exports everything from f-string module
-- **Core implementation**: `src/f-string.ts` - Contains the `f` tagged template function and control symbols (`If`, `Else`, `EndIf`)
-- **Tests**: `src/f-string.test.ts` - Comprehensive test suite using Vitest
+- **Main entry**: `src/index.ts` - exports everything from f-strings module
+- **Core implementation**: `src/f-strings.ts` - Contains the `f` tagged template function and control symbols (`If`, `Else`, `EndIf`)
+- **Tests**: `src/f-strings.test.ts` - Comprehensive test suite using Vitest
 
 ### Key Components
 

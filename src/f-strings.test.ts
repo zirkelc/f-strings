@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Else, EndIf, f, If } from './f-string';
+import { Else, EndIf, f, If } from './f-strings';
 
-describe('f-string', () => {
+describe('f-strings', () => {
   describe('conditional', () => {
     it('should include if-branch when condition is true', () => {
       const result = f`Start ${If(true)}TRUE${EndIf} End`;

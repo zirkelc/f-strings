@@ -1,7 +1,7 @@
 {
-  "name": "f-string",
-  "version": "1.0.0",
-  "description": "Tagged template function to write readable multi-line strings with a powerful If-Else-EndIf control structure and automatic dedentation",
+  "name": "f-strings",
+  "version": "0.0.0",
+  "description": "Tagged template function to write readable multi-line strings with embedded if-else conditions and automatic dedentation",
   "packageManager": "pnpm@9.0.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zirkelc/f-string.git"
+    "url": "git+https://github.com/zirkelc/f-strings.git"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
