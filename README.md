@@ -118,7 +118,7 @@ You have 1000 messages:
 ### `f` - Tagged Template Function
 
 ```typescript
-f`template ${value} string`
+const text = f`template ${value} string`
 ```
 
 #### `If(condition)` - Conditional Block
