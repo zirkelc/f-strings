@@ -173,27 +173,104 @@ describe('f-strings', () => {
   });
 
   describe('linebreaks', () => {
+    const line1 = 'Line 1';
+    const line2 = 'Line 2';
+
     it('should remove whitespace from standalone if-else-endif lines', () => {
-      const result = f`
+      // if-only with no interpolation
+      expect(f`
         ${If(true)}
         Line 1
         ${EndIf}
         ${If(true)}
         Line 2
         ${EndIf}
-        ${If(true)}
-        Line 3
-        ${EndIf}
-      `;
-      expect(result).toMatchInlineSnapshot(`
+      `).toMatchInlineSnapshot(`
         "Line 1
+        Line 2"
+      `);
+
+      // if-only with partial interpolation
+      expect(f`
+        ${If(true)}
+        Line 1
+        ${EndIf}
+        ${If(true)}
+        ${line2}
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+        Line 2"
+      `);
+
+      // if-only with full interpolation
+      expect(f`
+        ${If(true)}
+        ${line1}
+        ${EndIf}
+        ${If(true)}
+        ${line2}
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+        Line 2"
+      `);
+
+      // if-else with no interpolation
+      expect(f`
+        ${If(true)}
+        Line 1
+        ${Else}
+        NotShown
+        ${EndIf}
+        ${If(true)}
         Line 2
-        Line 3"
+        ${Else}
+        NotShown
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+        Line 2"
+      `);
+
+      // if-else with partial interpolation
+      expect(f`
+        ${If(true)}
+        Line1
+        ${Else}
+        ${line1}
+        ${EndIf}
+        ${If(false)}
+        ${line2}
+        ${Else}
+        Line2
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line1
+        Line2"
+      `);
+
+      // if-else with full interpolation
+      expect(f`
+        ${If(false)}
+        ${line1}
+        ${Else}
+        ${line1}
+        ${EndIf}
+        ${If(false)}
+        ${line2}
+        ${Else}
+        ${line2}
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+        Line 2"
       `);
     });
 
     it('should NOT remove empty lines between if-else-endif', () => {
-      const result = f`
+      // if-only with no interpolation
+      expect(f`
         ${If(true)}
         Line 1
         ${EndIf}
@@ -201,15 +278,78 @@ describe('f-strings', () => {
         ${If(true)}
         Line 2
         ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+
+        Line 2"
+      `);
+
+      // if-only with partial interpolation
+      expect(f`
+        ${If(true)}
+        Line 1
+        ${EndIf}
 
         ${If(true)}
-        Line 3
+        ${line2}
         ${EndIf}
-      `;
-      expect(result).toMatchInlineSnapshot(`
+      `).toMatchInlineSnapshot(`
         "Line 1
+
+        Line 2"
+      `);
+
+      // if-only with full interpolation
+      expect(f`
+        ${If(true)}
+        ${line1}
+        ${EndIf}
+
+        ${If(true)}
+        ${line2}
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+
+        Line 2"
+      `);
+
+      // if-else with no interpolation
+      expect(f`
+        ${If(false)}
+        NotShown
+        ${Else}
+        Line 1
+        ${EndIf}
+
+        ${If(false)}
+        NotShown
+        ${Else}
         Line 2
-        Line 3"
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+
+        Line 2"
+      `);
+
+      // if-else with full interpolation
+      expect(f`
+        ${If(false)}
+        ${line1}
+        ${Else}
+        Line 1
+        ${EndIf}
+
+        ${If(false)}
+        ${line2}
+        ${Else}
+        Line 2
+        ${EndIf}
+      `).toMatchInlineSnapshot(`
+        "Line 1
+
+        Line 2"
       `);
     });
 
