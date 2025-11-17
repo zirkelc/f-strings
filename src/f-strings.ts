@@ -1,7 +1,15 @@
-const IfTrueSymbol = Symbol('if(true)');
-const IfFalseSymbol = Symbol('if(false)');
-const ElseSymbol = Symbol('else');
-const EndIfSymbol = Symbol('endif');
+import { dedent } from './dedent.js';
+import { evaluate } from './evaluate.js';
+import {
+  Else,
+  ElseSymbol,
+  EndIf,
+  EndIfSymbol,
+  If,
+  IfFalseSymbol,
+  IfTrueSymbol,
+  isControlSymbol,
+} from './symbols.js';
 
 // Matches strings that are whitespace-only or end with newline followed by optional whitespace
 // Used to detect control symbols on their own line
@@ -12,66 +20,6 @@ const ENDS_WITH_WHITESPACE_LINE = /^\s*$|\n\s*$/;
 // Used to detect whitespace that should be stripped after control symbols
 // Examples: "\ntext", "\n  text", "\n"
 const STARTS_WITH_NEWLINE = /^\n/;
-
-// Matches lines that start with whitespace followed by non-whitespace content
-// Captures the leading whitespace for indentation calculation
-// Examples: "  text" (captures "  "), "\tcode" (captures "\t")
-const INDENTED_LINE = /^(\s+)\S/;
-
-export const If = (condition: any): symbol =>
-  condition ? IfTrueSymbol : IfFalseSymbol;
-
-export const Else = (): symbol => ElseSymbol;
-
-export const EndIf = (): symbol => EndIfSymbol;
-
-const isControlSymbol = (value: any): boolean =>
-  value === IfTrueSymbol ||
-  value === IfFalseSymbol ||
-  value === ElseSymbol ||
-  value === EndIfSymbol;
-
-/**
- * Removes common leading indentation from multi-line strings.
- * Finds the minimum indentation across all non-empty lines and removes it.
- * Also trims leading and trailing empty lines.
- */
-const dedent = (str: string): string => {
-  const lines = str.split('\n');
-
-  // Find the minimum indentation across all non-empty lines
-  let minIndent: number | null = null;
-
-  for (const line of lines) {
-    // Match lines that have indentation followed by non-whitespace
-    const match = line.match(INDENTED_LINE);
-    if (match?.[1]) {
-      const indentLength = match[1].length;
-      if (minIndent === null) {
-        minIndent = indentLength;
-      } else {
-        minIndent = Math.min(minIndent, indentLength);
-      }
-    }
-  }
-
-  // If no indented lines found, just trim and return
-  if (minIndent === null) {
-    return str.trim();
-  }
-
-  // Remove the minimum indentation from each line
-  const dedentedLines = lines.map((line) => {
-    // Only remove indentation from lines that start with whitespace
-    if (line[0] === ' ' || line[0] === '\t') {
-      return line.slice(minIndent);
-    }
-    return line;
-  });
-
-  // Join lines and trim leading/trailing whitespace
-  return dedentedLines.join('\n').trim();
-};
 
 /**
  * Looks ahead in the values array to find the next occurrence of a specific symbol
@@ -109,26 +57,6 @@ const lookAhead = (
     }
   }
   return undefined;
-};
-
-/**
- * Evaluates a value with lazy evaluation and array handling.
- *
- * - Functions are called recursively until a non-function value is reached
- * - Arrays are joined with newline separators
- * - All other values are returned as-is
- *
- * @param value - Value to evaluate
- * @returns Evaluated value
- */
-const evaluate = (value: any): any => {
-  if (typeof value === 'function') {
-    return evaluate(value());
-  }
-  if (Array.isArray(value)) {
-    return value.join('\n');
-  }
-  return value;
 };
 
 /**
