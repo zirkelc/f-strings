@@ -1,6 +1,6 @@
 {
   "name": "f-strings",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Tagged template function to write readable multi-line strings with embedded if-else conditions and automatic dedentation",
   "packageManager": "pnpm@9.0.0",
   "main": "./dist/index.js",
