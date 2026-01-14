@@ -129,7 +129,10 @@ export const f = (
         index + 1 < values.length && isControlSymbol(values[index + 1]);
       const nextAtEnd = index + 1 >= values.length;
 
-      if (nextValueIsControl || nextAtEnd) {
+      // Special case for Else: always consider stripping if on its own line
+      const isElse = values[index] === ElseSymbol;
+
+      if (nextValueIsControl || nextAtEnd || isElse) {
         const nextStr = strings[index + 1] ?? '';
 
         // Only strip if the pattern suggests control symbols on their own line
@@ -146,8 +149,36 @@ export const f = (
             str = str.replace(/[ \t]+$/, '');
           } else {
             // No inline content - control symbol is standalone, strip newline and whitespace
-            // Example: "  \n" -> ""
-            str = str.replace(/\n[ \t]*$/, '');
+            // BUT: Don't strip if this is a single newline representing a preserved empty line
+            // (e.g., after leading strip converted "\n\n  " to "\n  ")
+            const isSingleNewline = /^\n[ \t]*$/.test(str);
+            if (isSingleNewline) {
+              // String is ONLY a single newline + whitespace - this might be a preserved empty line
+              // Check if original string (before leading strip) had multiple newlines
+              const originalStr = strings[index] ?? '';
+              const hadMultipleNewlines =
+                (originalStr.match(/\n/g) || []).length > 1;
+
+              if (hadMultipleNewlines) {
+                // Check if previous control was also standalone (no inline content)
+                const prevStr = strings[index - 1] ?? '';
+                const prevWasStandalone =
+                  !prevStr.match(/\S/) || prevStr.match(/^\s*\n/);
+
+                if (prevWasStandalone) {
+                  // Both controls are standalone, preserve the empty line
+                  str = '\n';
+                } else {
+                  // Previous had inline content, strip the newline
+                  str = str.replace(/\n[ \t]*$/, '');
+                }
+              } else {
+                // Original had single newline, strip it
+                str = str.replace(/\n[ \t]*$/, '');
+              }
+            } else {
+              str = str.replace(/\n[ \t]*$/, '');
+            }
           }
         }
       }

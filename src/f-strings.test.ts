@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Else, EndIf, f, If } from './f-strings';
+import { f } from './f-strings.js';
+import { Else, EndIf, If } from './symbols.js';
 
 describe('f-strings', () => {
   describe('conditional', () => {
